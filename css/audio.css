@@ -7,8 +7,8 @@
 }
 
 .vod-container {
-  height: 360px;
-  width: 640px;
+  max-height: 360px;
+  max-width: 640px;
   background-color: rgb(48, 48, 48);
 }
 
@@ -20,14 +20,6 @@ audio {
 
 audio::-webkit-media-controls-panel {
   background-color: #d6d6d6;
-}
-
-audio::-webkit-media-controls-mute-button {
-  color: #fff;
-}
-
-audio::-webkit-media-controls-play-button {
-  color: #fff;
 }
 
 audio::-webkit-media-controls-current-time-display {

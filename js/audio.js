@@ -4,11 +4,12 @@ let params = new URLSearchParams(document.location.search.substring(1));
 let accountId = 'zc26Tw'; // hard-coded accountID - This ID should never change
 let streamName = 'audio_373'; // hard-coded Stream Name - This ID is for an individual stream
 let subToken = params.get('token'); // SubscribingToken - placed here for ease of testing, should come from secure location. (php/nodejs)
-console.log('Millicast Viewer Stream: ', streamName);
+// console.log('Millicast Viewer Stream: ', streamName);
 
 //Millicast required info.
 let url; // path to Millicast Server - Returned from API
 let jwt; //authorization token - Returned from API
+let ws_cnt = [];
 
 const apiPath = 'https://director.millicast.com/api/director/subscribe';
 const turnUrl = 'https://turn.millicast.com/webrtc/_turn';
@@ -40,7 +41,7 @@ function connect() {
   }
   showMsg('Connecting...');
 
-  console.log('connecting to: ', url);
+  // console.log('connecting to: ', url);
 
   let conf = {
     iceServers: iceServers,
@@ -59,7 +60,7 @@ function connect() {
     }
   };
   pc.onconnectionstatechange = function (e) {
-    console.log('PC state:', pc.connectionState);
+    // console.log('PC state:', pc.connectionState);
     switch (pc.connectionState) {
       case 'connected':
         if (!ws_cnt && showUserCount) {
@@ -77,7 +78,7 @@ function connect() {
       case 'failed':
         break;
       case 'closed':
-        console.log('WS onclose ', reconn);
+        // console.log('WS onclose ', reconn);
         if (reconn) {
           stopUserCount();
           pc = null;
@@ -89,27 +90,27 @@ function connect() {
     }
   };
 
-  console.log('connecting to: ', url + '?token=' + jwt); //token
+  // console.log('connecting to: ', url + '?token=' + jwt); //token
   //connect with Websockets for handshake to media server.
   ws = new WebSocket(url + '?token=' + jwt);
   ws.onopen = function () {
-    console.log('ws::onopen');
+    // console.log('ws::onopen');
     let offer = pc
       .createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true })
       .then((desc) => {
-        console.log('createOffer Success!');
+        // console.log('createOffer Success!');
         //support for stereo
         desc.sdp = desc.sdp.replace('useinbandfec=1', 'useinbandfec=1; stereo=1');
         //try for multiopus (surround sound) support
         try {
           desc.sdp = setMultiopus(desc);
         } catch (e) {
-          console.log('create offer stereo', offer);
+          // console.log('create offer stereo', offer);
         }
         //set local description and send offer to media server via ws.
         pc.setLocalDescription(desc)
           .then(() => {
-            console.log('setLocalDescription Success!');
+            // console.log('setLocalDescription Success!');
             //set required information for media server.
             let data = {
               streamId: accountId, //Millicast accountId
@@ -122,27 +123,27 @@ function connect() {
               name: 'view',
               data: data,
             };
-            console.log('send ', payload);
+            // console.log('send ', payload);
             ws.send(JSON.stringify(payload));
           })
           .catch((e) => {
-            console.log('setLocalDescription failed: ', e);
+            // console.log('setLocalDescription failed: ', e);
             showMsg(e.status + ': ' + e.data.message);
           });
       })
       .catch((e) => {
-        console.log('createOffer Failed: ', e);
+        // console.log('createOffer Failed: ', e);
         showMsg(e.status + ': ' + e.data.message);
       });
   };
   ws.onclose = function () {
-    console.log('WS onclose ', reconn);
+    // console.log('WS onclose ', reconn);
     if (reconn) {
       ws = null;
       if (!pc) {
         setTimeout(connect(), 700);
       } else {
-        console.log('close PC ', pc);
+        // console.log('close PC ', pc);
         pc.close();
         pc = null;
         setTimeout(connect(), 700);
@@ -150,7 +151,7 @@ function connect() {
     }
   };
   ws.addEventListener('message', (evt) => {
-    console.log('ws::message', evt);
+    // console.log('ws::message', evt);
     let msg = JSON.parse(evt.data);
     switch (msg.type) {
       //Handle counter response coming from the Media Server.
@@ -166,7 +167,7 @@ function connect() {
               return line.trim() !== 'a=extmap-allow-mixed';
             })
             .join('\n');
-          console.log('trimed a=extmap-allow-mixed - sdp \n', remotesdp);
+          // console.log('trimed a=extmap-allow-mixed - sdp \n', remotesdp);
         }
         let answer = new RTCSessionDescription({
           type: 'answer',
@@ -175,7 +176,7 @@ function connect() {
 
         pc.setRemoteDescription(answer)
           .then((d) => {
-            console.log('setRemoteDescription  Success! ');
+            // console.log('setRemoteDescription  Success! ');
             showMsg('');
           })
           .catch((e) => {
@@ -188,7 +189,7 @@ function connect() {
           console.log('Video Inactive');
           showMsg('Stream inactive, please stand by...');
         } else if (msg.name === 'active') {
-          console.log('Video Active');
+          // console.log('Video Active');
           showMsg(''); //clear message
         } else if (msg.name === 'stopped') {
           console.log('Video Stopped');
@@ -224,7 +225,7 @@ function getICEServers() {
       if (xhr.readyState == 4) {
         let res = JSON.parse(xhr.responseText),
           a;
-        console.log('getICEServers::status:', xhr.status, ' response: ', xhr.responseText);
+        // console.log('getICEServers::status:', xhr.status, ' response: ', xhr.responseText);
         switch (xhr.status) {
           case 200:
             //returns array.
@@ -246,7 +247,7 @@ function getICEServers() {
               a.push(cred);
               //console.log('cred:',cred);
             });
-            console.log('ice: ', a);
+            // console.log('ice: ', a);
             resolve(a);
             break;
           default:
@@ -265,14 +266,14 @@ function getICEServers() {
 
 // gets server path and auth token.
 function updateMillicastAuth() {
-  console.log('updateMillicastAuth at: ' + apiPath + ' for:', streamName, ' accountId:', accountId);
+  // console.log('updateMillicastAuth at: ' + apiPath + ' for:', streamName, ' accountId:', accountId);
   return new Promise((resolve, reject) => {
     let xhr = new XMLHttpRequest();
     xhr.onreadystatechange = function (evt) {
       if (xhr.readyState == 4) {
         let res = JSON.parse(xhr.responseText);
-        console.log('res: ', res);
-        console.log('status:', xhr.status, ' response: ', xhr.responseText);
+        // console.log('res: ', res);
+        // console.log('status:', xhr.status, ' response: ', xhr.responseText);
         switch (xhr.status) {
           case 200:
             if (res.status !== 'fail') {
@@ -291,7 +292,7 @@ function updateMillicastAuth() {
     //apply subscribe token if available.
     if (subToken) {
       xhr.setRequestHeader('Authorization', `Bearer ${subToken}`);
-      console.log('sub token applied');
+      // console.log('sub token applied');
     }
     xhr.setRequestHeader('Content-Type', 'application/json');
     xhr.send(JSON.stringify({ streamAccountId: accountId, streamName: streamName, unauthorizedSubscribe: true }));
@@ -317,7 +318,7 @@ function setMultiopus(offer) {
     isChrome = true;
   }
 
-  console.log('isChrome: ', isChrome);
+  // console.log('isChrome: ', isChrome);
   if (isChrome) {
     // console.log('agent: ',navigator.userAgent);
     //Find the audio m-line
@@ -339,7 +340,7 @@ function setMultiopus(offer) {
       ' channel_mapping=0,4,1,2,3,5;coupled_streams=2;minptime=10;num_streams=4;useinbandfec=1\r\n';
     //Change sdp
     offer.sdp = offer.sdp.replace(audio, multiopus);
-    console.log('create multi-opus offer', offer);
+    // console.log('create multi-opus offer', offer);
   } else {
     console.log('no multi-opus support');
   }
