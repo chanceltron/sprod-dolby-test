@@ -1,0 +1,39 @@
+.container {
+  width: fit-content;
+  height: fit-content;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.vod-container {
+  height: 360px;
+  width: 640px;
+  background-color: rgb(48, 48, 48);
+}
+
+audio {
+  height: 30px;
+  width: 98%;
+  padding: 2%;
+}
+
+audio::-webkit-media-controls-panel {
+  background-color: #d6d6d6;
+}
+
+audio::-webkit-media-controls-mute-button {
+  color: #fff;
+}
+
+audio::-webkit-media-controls-play-button {
+  color: #fff;
+}
+
+audio::-webkit-media-controls-current-time-display {
+  display: none;
+}
+
+audio::-webkit-media-controls-timeline {
+  display: none;
+}

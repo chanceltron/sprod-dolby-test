@@ -5,9 +5,25 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SProd Dolby Test</title>
+    <link rel="stylesheet" href="css/audio.css" />
     <script src="js/audio.js"></script>
   </head>
   <body>
-    <audio id="player" playsinline controls autoplay type="video/ogg"></audio>
+    <div class="container">
+      <div class="vod-container">
+        <video
+          src="https://latv-media.s3.us-east-2.amazonaws.com/uploads/auctions/373/dev/128_video.mp4"
+          playsinline=""
+          muted=""
+          controls=""
+          autoplay=""
+          loop=""
+          preload="none"
+          id="video_vod"
+          class="smallVideo"
+          style=""></video>
+      </div>
+      <audio id="player" playsinline controls autoplay></audio>
+    </div>
   </body>
 </html>
